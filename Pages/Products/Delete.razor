@@ -1,0 +1,78 @@
+﻿@page "/products/delete/{id:int}"
+@inject AppDbContext _context
+@using System.Globalization;
+@inject NavigationManager _navigationManager
+
+<h1>Deseja excluir o registro "@_model?.Title"?</h1>
+
+<EditForm Model="_model" OnValidSubmit="@HandleSubmitAsync">
+
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+	<div class="mb-3">
+		<label for="Title" class="form-label">Title</label>
+		<InputText readonly class="form-control" type="text" id="Title" @bind-Value="_model.Title" />
+	</div>
+
+	<div class="mb-3">
+		<label for="Price" class="form-label">Price</label>
+		<InputNumber readonly class="form-control" type="number" id="Price" @bind-Value="_model.Price" />
+	</div>
+
+	<div class="mb-3">
+		<label for="CategoryId" class="form-label">Categoria</label>
+
+		<InputSelect readonly id="CategoryId" @bind-Value="@_model.CategoryId" class="form-control">
+			@foreach (var category in _categories)
+			{
+				<option value="@category.Id">@category.Title</option>
+			}
+		</InputSelect>
+	</div>
+
+	@if (!string.IsNullOrEmpty(@_errorMessage))
+	{
+		<div class="alert-danger" role="alert">
+			@_errorMessage
+		</div>
+	}
+
+	<button class="btn btn-danger" type="submit">Deletar</button>
+</EditForm>
+
+@code {
+	[Parameter]
+	public int Id { get; set; }
+
+	private Product? _model = new();
+	private List<Category> _categories = new();
+	string? _errorMessage = null;
+
+	protected override async Task OnInitializedAsync()
+	{
+		_categories = await _context.Category.AsNoTracking().OrderBy(x => x.Title).ToListAsync();
+		_model = await _context.Product.AsNoTracking().FirstOrDefaultAsync(x => x.Id == Id);
+	}
+
+	async Task HandleSubmitAsync()
+	{
+		try
+		{
+			var prod = await _context.Product.AsTracking().Include(x => x.Category).FirstOrDefaultAsync(x => x.Id == Id);
+			if (prod is null)
+			{
+				_errorMessage = "Produto Não Encontrado.";
+				return;
+			}
+
+			_context.Product.Remove(prod);
+			await _context.SaveChangesAsync();
+
+			_navigationManager.NavigateTo("/products");
+		}
+		catch
+		{
+			_errorMessage = "Falha ao deletar o produto";
+		}
+	}
+}

@@ -1,0 +1,66 @@
+﻿@page "/products/create"
+@inject AppDbContext _context
+@inject NavigationManager _navigationManager
+<h1>New Products</h1>
+
+<EditForm Model="_model" OnValidSubmit="@HandleSubmitAsync">
+
+	<DataAnnotationsValidator/>
+	<ValidationSummary/>
+	<div class="mb-3">
+		<label for="Title" class="form-label">Title</label>
+		<InputText class="form-control" type="text" id="Title" @bind-Value="_model.Title" />
+	</div>
+
+	<div class="mb-3">
+		<label for="Price" class="form-label">Price</label>
+		<InputNumber class="form-control" type="number" id="Price" @bind-Value="_model.Price" />
+	</div>
+
+	<div class="mb-3">
+		<label for="CategoryId" class="form-label">Categoria</label>
+
+		<InputSelect id="CategoryId" @bind-Value="@_model.CategoryId" class="form-control">
+			@foreach (var category in _categories)
+			{
+				<option value="@category.Id">@category.Title</option>
+			}
+		</InputSelect>
+	</div>
+
+	@if (!string.IsNullOrEmpty(@_errorMessage))
+	{
+		<div class="alert-danger" role="alert">
+			@_errorMessage
+		</div>
+	}
+
+	<button class="btn btn-success" type="submit">SAVE</button>
+</EditForm>
+
+@code {
+
+	private Product _model = new();
+	private List<Category> _categories = new();
+	string? _errorMessage = null;
+
+	protected override async Task OnInitializedAsync()
+	{
+		_categories = await _context.Category.ToListAsync();
+		_model.CategoryId = _categories[0].Id;
+	}
+
+	async Task HandleSubmitAsync()
+	{
+		try
+		{
+			await _context.Product.AddAsync(_model);
+			_context.SaveChanges();
+			_navigationManager.NavigateTo("/products");
+		}	
+		catch
+		{
+			_errorMessage = "Falha ao persistir os dados";
+		}
+	}
+}

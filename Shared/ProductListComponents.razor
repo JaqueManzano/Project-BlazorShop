@@ -1,0 +1,25 @@
+﻿<ul>
+	@foreach (var item in _products)
+	{
+		<li>@item.Title</li>
+	}
+</ul>
+
+@code {
+	[Parameter]
+	public int Skyp { get; set; } = 0;
+	[Parameter]
+	public int Take { get; set; } = 25;
+
+	private List<Product> _products = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Delay(500);
+
+		for (int i = 1; i < 378; i++)
+		{
+			_products.Add(new Product(i + 1, $"Produto {i}", $"Desc do Produto {i}", $"Image do Produto {i}", i * 13.75M, 1));
+		}
+	}
+}
